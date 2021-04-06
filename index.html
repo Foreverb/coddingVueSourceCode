@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <div id="app">
+    <h2>{{person.name}} -- {{person.age}}</h2>
+    <h3>家乡：{{person.homeTown}}</h3>
+    <ul>
+      <li>父亲：{{familyMembers.father}}</li>
+      <li>母亲：{{familyMembers.mother}}</li>
+      <li>兄弟姐妹：{{familyMembers.sister}}</li>
+    </ul>
+    <div v-text="attrSelf"></div>
+    <div v-html="personFrom"></div>
+    <input type="text" v-model="personFrom">
+  </div>
+</body>
+<script src="./mVue.js"></script>
+<script>
+  const vm = new mVue({
+    el: '#app',
+    data: {
+      person: {
+        name: '杨古波',
+        age: 18,
+        homeTown: '江西'
+      },
+      familyMembers: {
+        father: '杨全正',
+        mother: '李林香',
+        sister: '杨桂英，杨飞，杨秋英'
+      },
+      attrSelf: '我是一位大帅锅',
+      personFrom: '江西省上饶市'
+    }
+  })
+</script>
+</html>
