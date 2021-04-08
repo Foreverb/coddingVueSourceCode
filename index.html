@@ -11,13 +11,15 @@
     <h2>{{person.name}} -- {{person.age}}</h2>
     <h3>家乡：{{person.homeTown}}</h3>
     <ul>
-      <li>父亲：{{familyMembers.father}}</li>
-      <li>母亲：{{familyMembers.mother}}</li>
-      <li>兄弟姐妹：{{familyMembers.sister}}</li>
+      <li>{{familyMembers.father}}</li>
+      <li>{{familyMembers.mother}}</li>
+      <li>{{familyMembers.sister}}</li>
     </ul>
     <div v-text="attrSelf"></div>
     <div v-html="personFrom"></div>
     <input type="text" v-model="personFrom">
+    <button v-on:click="handelClick">on点击弹出alert</button>
+    <button @click="handelClick">@点击弹出alert</button>
   </div>
 </body>
 <script src="./mVue.js"></script>
@@ -31,12 +33,17 @@
         homeTown: '江西'
       },
       familyMembers: {
-        father: '杨全正',
-        mother: '李林香',
-        sister: '杨桂英，杨飞，杨秋英'
+        father: '父亲：杨全正',
+        mother: '母亲：李林香',
+        sister: '兄弟姐妹：杨桂英，杨飞，杨秋英'
       },
       attrSelf: '我是一位大帅锅',
       personFrom: '江西省上饶市'
+    },
+    methods: {
+      handelClick() {
+        alert('按钮被点击')
+      }
     }
   })
 </script>

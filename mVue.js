@@ -1,5 +1,49 @@
+//编译指令
+const compileUtil = {
+  getVal(expr, vm) {
+    return [...expr.split('.')].reduce((returnVal, currenValue)=>{
+      return returnVal[currenValue]
+    }, vm.$data)
+  },
+  text( node, expr, vm ) {
+    let value;
+    if( expr.indexOf('{{') !== -1 ) {
+      value = expr.replace(/\{\{(.+?)\}\}/g, (...args) => {
+        return this.getVal(args[1], vm)
+      })
+    }else{
+      value = this.getVal(expr, vm);
+    }
+    this.updater.textUpdater(node, value);
+  },
+  html( node, expr, vm ) {
+    let value = this.getVal(expr, vm);
+    this.updater.htmlUpdater(node, value);
+  },
+  model( node, expr, vm ) {
+    let value = this.getVal(expr, vm);
+    this.updater.modelUpdater(node, value);
+  },
+  on( node, expr, vm, eventName) {
+    const func = vm.$options.methods && vm.$options.methods[expr];
+    node.addEventListener(eventName, func.bind(vm), false)
+  },
+  //数据驱动视图，更新视图
+  updater: {
+    textUpdater(node, val){
+      node.textContent = val;
+    },
+    htmlUpdater(node, val){
+      node.innerHTML = val;
+    },
+    modelUpdater(node, val){
+      node.value = val;
+    },
+  }
+}
 class Compile {
   constructor(el, vm) {
+    this.vm = vm;
     this.el = this.isElementType(el) ? el : document.querySelector(el);
     //1. 将所有节点插入到文档碎片中（使用文档碎片可以减少重绘重排，提升性能）
     const fragment = this.nodeFragment(this.el);
@@ -26,11 +70,38 @@ class Compile {
   }
   //compileElement编译元素节点
   compileElement(node) {
-    
+    const childAttr = node.attributes;
+    [...childAttr].forEach(attr=>{
+      const {name, value} = attr;
+      if( this.isDirective(name) ) {
+        const [,directive] = name.split('-');
+        const [directiveName, eventName] = directive.split(':');
+        //更新视图，数据驱动视图
+        compileUtil[directiveName](node,value,this.vm,eventName);
+        //移除行间指令
+        node.removeAttribute(`v-${directiveName}`);
+        eventName && node.removeAttribute(`v-${directiveName}:${eventName}`)
+      } else if( this.isEventName(name) ) {
+        const [, eventName] = name.split('@');
+        compileUtil['on'](node,value,this.vm,eventName)
+      }
+    })
   }
   //compileNode编译文本节点
-  compileText(node) {
-
+  compileText(node) { 
+    // {{}} 
+    const content = node.textContent;
+    if( /\{\{.+?\}\}/.test(content) ) {
+      compileUtil['text'](node, content, this.vm)
+    }
+  }
+  //判断是否是通过@绑定事件
+  isEventName(attr) {
+    return attr.startsWith('@');
+  }
+  //判断是否为指令
+  isDirective(attr) {
+    return attr.startsWith('v-');
   }
   //创建文档碎片s
   nodeFragment(el) {
