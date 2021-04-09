@@ -20,7 +20,7 @@
         </ul>
         <div v-text="attrSelf"></div>
         <div v-html="personFrom"></div>
-        <input type="text" v-model="personFrom">
+        <input type="text" v-model="modelPerson">
         <button v-on:click="handelClick">on点击弹出alert</button>
         <button @click="handelClick">@点击弹出alert</button>
     </div>
@@ -43,7 +43,8 @@
                 sister: '兄弟姐妹：杨桂英，杨飞，杨秋英'
             },
             attrSelf: '我是一位大帅锅',
-            personFrom: '江西省上饶市'
+            personFrom: '<h1>江西省上饶市</h1>',
+            modelPerson: '我很帅'
         },
         methods: {
             handelClick() {

@@ -18,10 +18,14 @@ const compileUtil = {
     },
     html(node, expr, vm) {
         let value = this.getVal(expr, vm);
+        //创建观察者
+        new Watcher(vm, expr, (newVal) => this.updater.htmlUpdater(node, newVal))
         this.updater.htmlUpdater(node, value);
     },
     model(node, expr, vm) {
         let value = this.getVal(expr, vm);
+        //创建观察者
+        new Watcher(vm, expr, (newVal) => this.updater.modelUpdater(node, newVal))
         this.updater.modelUpdater(node, value);
     },
     on(node, expr, vm, eventName) {
@@ -54,65 +58,67 @@ class Compile {
         this.el.appendChild(fragment)
     }
     compile(fragment) {
-            let childList = fragment.childNodes;
-            [...childList].forEach(child => {
-                if (this.isElementType(child)) {
-                    //编译元素节点
-                    this.compileElement(child);
-                } else {
-                    //编译文本节点
-                    this.compileText(child);
-                }
-                if (child.childNodes && child.childNodes.length) {
-                    this.compile(child)
-                }
-            })
-        }
-        //compileElement编译元素节点
+        let childList = fragment.childNodes;
+        [...childList].forEach(child => {
+            if (this.isElementType(child)) {
+                //编译元素节点
+                this.compileElement(child);
+            } else {
+                //编译文本节点
+                this.compileText(child);
+            }
+            if (child.childNodes && child.childNodes.length) {
+                this.compile(child)
+            }
+        })
+    }
+    //compileElement编译元素节点
     compileElement(node) {
-            const childAttr = node.attributes;
-            [...childAttr].forEach(attr => {
-                const { name, value } = attr;
-                if (this.isDirective(name)) {
-                    const [, directive] = name.split('-');
-                    const [directiveName, eventName] = directive.split(':');
-                    //更新视图，数据驱动视图
-                    compileUtil[directiveName](node, value, this.vm, eventName);
-                    //移除行间指令
-                    node.removeAttribute(`v-${directiveName}`);
-                    eventName && node.removeAttribute(`v-${directiveName}:${eventName}`)
-                } else if (this.isEventName(name)) {
-                    const [, eventName] = name.split('@');
-                    compileUtil['on'](node, value, this.vm, eventName)
-                }
-            })
-        }
-        //compileNode编译文本节点
+        const childAttr = node.attributes;
+        [...childAttr].forEach(attr => {
+            const { name, value } = attr;
+            if (this.isDirective(name)) {
+                const [, directive] = name.split('-');
+                const [directiveName, eventName] = directive.split(':');
+                //更新视图，数据驱动视图
+                compileUtil[directiveName](node, value, this.vm, eventName);
+                //移除行间指令
+                node.removeAttribute(`v-${directiveName}`);
+                eventName && node.removeAttribute(`v-${directiveName}:${eventName}`)
+            } else if (this.isEventName(name)) {
+                //编译@指令
+                const [, eventName] = name.split('@');
+                compileUtil['on'](node, value, this.vm, eventName)
+                eventName && node.removeAttribute(`@${eventName}`)
+            }
+        })
+    }
+    //compileNode编译文本节点
     compileText(node) {
-            // {{}} 
-            const content = node.textContent;
-            if (/\{\{.+?\}\}/.test(content)) {
-                compileUtil['text'](node, content, this.vm)
-            }
+        // {{}} 
+        const content = node.textContent;
+        if (/\{\{.+?\}\}/.test(content)) {
+            compileUtil['text'](node, content, this.vm)
         }
-        //判断是否是通过@绑定事件
+    }
+    //判断是否是通过@绑定事件
     isEventName(attr) {
-            return attr.startsWith('@');
-        }
-        //判断是否为指令
+        return attr.startsWith('@');
+    }
+    //判断是否为指令
     isDirective(attr) {
-            return attr.startsWith('v-');
-        }
-        //创建文档碎片s
+        return attr.startsWith('v-');
+    }
+    //创建文档碎片s
     nodeFragment(el) {
-            const f = document.createDocumentFragment();
-            let firstChild;
-            while (firstChild = el.firstChild) {
-                f.appendChild(firstChild);
-            }
-            return f;
+        const f = document.createDocumentFragment();
+        let firstChild;
+        while (firstChild = el.firstChild) {
+            f.appendChild(firstChild);
         }
-        //判断元素是否是元素节点
+        return f;
+    }
+    //判断元素是否是元素节点
     isElementType(node) {
         return node.nodeType === 1
     }
@@ -122,11 +128,12 @@ class mVue {
         this.$el = options.el;
         this.$data = options.data;
         this.$options = options;
-        //1. 实现一个指令解析器
+        //顺序不能变
+        //1. 实现一个数据监听器
+        new Observe(this.$data)
+        //2. 实现一个指令解析器
         if (this.$el) {
             new Compile(this.$el, this)
         }
-        //2. 实现一个数据监听器
-        new Observe(this.$data)
     }
 }
