@@ -5,10 +5,19 @@ const compileUtil = {
             return returnVal[currenValue]
         }, vm.$data)
     },
+    getContentVal(expr, vm) {
+        return expr.replace(/\{\{(.+?)\}\}/g, (...args) => {
+            return this.getVal(args[1], vm)
+        })
+    },
     text(node, expr, vm) {
         let value;
         if (expr.indexOf('{{') !== -1) {
             value = expr.replace(/\{\{(.+?)\}\}/g, (...args) => {
+                //创建观察者
+                new Watcher(vm, args[1], (newVal) => {
+                    this.updater.textUpdater(node, this.getContentVal(expr, vm));
+                })
                 return this.getVal(args[1], vm)
             })
         } else {
